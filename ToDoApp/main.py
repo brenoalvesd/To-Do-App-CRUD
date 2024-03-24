@@ -9,7 +9,7 @@ Base.metadata.create_all(bind=engine)
 
 @app.get("/healthy")
 def health_check():
-    return {'status': 'Healthy'}
+    return {'status': 'Application running successfully'}
 
 
 app.include_router(auth.router)
