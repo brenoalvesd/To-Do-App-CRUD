@@ -35,7 +35,7 @@ class TodoRequest(BaseModel):
 @router.get("/", status_code=status.HTTP_200_OK)
 async def read_all_todos(user: user_dependecy, db: db_dependecy): 
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+        raise HTTPException(status_code=401, detail='Authentication is required')
     return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 
@@ -44,7 +44,7 @@ async def read_todo_by_id(user: user_dependecy,
                     db : db_dependecy, 
                     todo_id: int = Path(gt=0)):
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+        raise HTTPException(status_code=401, detail='Authentication is required')
     
     todo_model = db.query(Todos).filter(Todos.id == todo_id)\
         .filter(Todos.owner_id == user.get('id')).first()
@@ -62,12 +62,21 @@ async def read_completed_todos(user: dict = Depends(get_current_user), db: Sessi
     return completed_todos
 
 
+@router.get("/priority/{priority}", status_code=status.HTTP_200_OK)
+async def read_todos_by_priority(priority: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication is required")
+    
+    todos_by_priority = db.query(Todos).filter(Todos.owner_id == user.get('id'), Todos.priority == priority).all()
+    return todos_by_priority
+
+
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
 async def create_todo(user: user_dependecy, 
                       db: db_dependecy, 
                       todo_request: TodoRequest):
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+        raise HTTPException(status_code=401, detail='Authentication is required')
     todo_model = Todos(**todo_request.model_dump(), owner_id = user.get('id'))
 
     db.add(todo_model)
@@ -81,7 +90,7 @@ async def update_todo(user: user_dependecy,
                       todo_request: TodoRequest,
                       todo_id: int = Path(gt=0)):
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+        raise HTTPException(status_code=401, detail='Authentication is required')
     
     todo_model = db.query(Todos).filter(Todos.id == todo_id)\
         .filter(Todos.owner_id == user.get('id')).first()
