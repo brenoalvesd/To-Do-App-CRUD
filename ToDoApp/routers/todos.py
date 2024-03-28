@@ -53,6 +53,15 @@ async def read_todo_by_id(user: user_dependecy,
     raise HTTPException(status_code=404, detail='To-Do not found.')
 
 
+@router.get("/completed", status_code=status.HTTP_200_OK)
+async def read_completed_todos(user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication is required")
+    
+    completed_todos = db.query(Todos).filter(Todos.owner_id == user.get('id'), Todos.complete == True).all()
+    return completed_todos
+
+
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
 async def create_todo(user: user_dependecy, 
                       db: db_dependecy, 
